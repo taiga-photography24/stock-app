@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ストック">
+<meta name="theme-color" content="#ffffff">
+<meta name="color-scheme" content="light">
+<title>ストック管理</title>
+<style>
+:root{--bg:#fff;--tx:#2b2b2b;--sub:#9a9a9a;--line:#d9d9d9;--navy:#2f5d8f;--green:#8bc34a;--orange:#ffab40;--grp:#eeeaea;--red:#e53935}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;min-height:100vh}
+button{font:inherit;color:inherit;background:none;border:0;padding:0}
+input,select{font:inherit}
+svg{display:block}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 16px 6px}
+header h1{margin:0;font-size:22px}
+.hb{width:36px;height:36px;font-size:24px;line-height:36px;text-align:center}
+
+.tabs{display:flex;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+.tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 0 10px;font-weight:700;font-size:15px;color:#555;border-bottom:3px solid transparent}
+.tabs button.on{color:var(--navy);border-bottom-color:var(--navy)}
+.tabs svg{width:24px;height:24px;fill:currentColor}
+.tabs b{background:var(--orange);color:#fff;border-radius:10px;font-size:12px;padding:0 7px;min-width:20px;text-align:center}
+
+main{padding:12px 12px calc(110px + env(safe-area-inset-bottom))}
+[hidden]{display:none!important}
+
+.search{display:flex;align-items:center;gap:10px;border:1.5px solid #888;border-radius:12px;padding:0 12px;margin-bottom:14px}
+.search svg{width:22px;height:22px;fill:#444;flex:none}
+.search input{flex:1;border:0;outline:0;padding:12px 0;font-size:16px;background:none;min-width:0}
+
+.grp{background:var(--grp);border-radius:18px;padding:6px 10px 10px;margin-bottom:14px}
+.gh{display:flex;align-items:center;justify-content:space-between;padding:6px 4px}
+.gh .gt{flex:1;text-align:left;color:var(--navy);font-weight:700;font-size:18px;padding:8px 0;overflow-wrap:anywhere}
+.gh .gp{width:44px;height:40px;color:var(--navy);font-size:28px;line-height:40px;text-align:center}
+.card{display:flex;align-items:center;gap:14px;background:#fff;border-radius:16px;padding:10px 12px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,.18);transition:background .15s}
+.card.cart{background:#e9e6e6}
+.card .nm{flex:1;text-align:left;padding:8px 0;overflow-wrap:anywhere}
+.circle{flex:none;width:32px;height:32px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center}
+.card.cart .circle{background:#a8a8a8}
+.circle svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.hint{color:var(--sub);font-size:14px;padding:8px 6px}
+.addgrp{width:100%;padding:14px;color:var(--navy);font-weight:700;border:1.5px dashed var(--navy);border-radius:14px}
+
+.addrow{display:flex;align-items:center;gap:14px;border-bottom:1.5px solid #999;padding:6px 6px 6px 10px;margin:4px 6px 18px}
+.addrow svg{width:30px;height:30px;fill:#444;flex:none}
+.addrow input{flex:1;border:0;outline:0;font-size:17px;padding:10px 0;background:none;min-width:0}
+.sh{font-weight:700;color:var(--sub);padding:6px 10px;margin-top:12px}
+.srow{display:flex;align-items:center;gap:16px;padding:6px 10px}
+.box{flex:none;width:28px;height:28px;border-radius:5px;border:2.5px solid #777;display:flex;align-items:center;justify-content:center;background:#fff}
+.box svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;display:none}
+.srow.done .box{background:#9a9a9a;border-color:#9a9a9a}
+.srow.done .box svg{display:block}
+.srow .nm{flex:1;text-align:left;padding:12px 0;overflow-wrap:anywhere}
+.srow.done .nm{text-decoration:line-through;color:var(--sub)}
+.celebrate{text-align:center;padding:40px 0;color:#333}
+.celebrate .em{font-size:120px;line-height:1.1}
+.celebrate p{font-size:20px;margin:24px 0 0}
+
+.fab{position:fixed;right:20px;bottom:calc(24px + env(safe-area-inset-bottom));width:66px;height:62px;border-radius:18px;background:var(--orange);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.3);z-index:6}
+.fab.off{background:#a8a8a8}
+.fab svg{width:30px;height:30px;fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.dlg{background:#fff;width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
+.dlg h2{margin:0 0 8px;font-size:18px}
+.dlg label{display:block;font-size:13px;color:var(--sub);margin-top:10px}
+.dlg input,.dlg select{display:block;width:100%;margin-top:4px;font-size:16px;border:1px solid var(--line);background:#fff;color:var(--tx);border-radius:10px;padding:11px}
+.dbar{display:flex;gap:8px;margin:16px 0 8px}
+.btn{border-radius:12px;padding:12px 14px;font-weight:700;background:var(--navy);color:#fff;text-align:center}
+.btn.gray{background:#e4e4e4;color:var(--tx)}
+.btn.red{background:var(--red)}
+.btn.wide{display:block;width:100%;margin-top:8px}
+.dbar .btn{flex:1}
+</style>
+</head>
+<body>
+<header>
+  <button class="hb" id="menu" aria-label="メニュー">☰</button>
+  <h1>マイストック</h1>
+  <button class="hb" id="share" aria-label="リストを共有" hidden>
+    <svg viewBox="0 0 24 24" width="24" height="24" style="margin:6px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4M6 11H5a1 1 0 00-1 1v8a1 1 0 001 1h14a1 1 0 001-1v-8a1 1 0 00-1-1h-1"/></svg>
+  </button>
+</header>
+<div class="tabs">
+  <button id="tStock" class="on">
+    <svg viewBox="0 0 24 24"><path d="M3 3h18a1 1 0 011 1v3a1 1 0 01-1 1v11a2 2 0 01-2 2H5a2 2 0 01-2-2V8a1 1 0 01-1-1V4a1 1 0 011-1zm7 8a1 1 0 000 2h4a1 1 0 000-2h-4z"/></svg>
+    常備するもの
+  </button>
+  <button id="tShop">
+    <svg viewBox="0 0 24 24"><path d="M7 18a2 2 0 100 4 2 2 0 000-4zM1 2v2h2l3.6 7.59-1.35 2.45A2 2 0 007 17h12v-2H7.42a.25.25 0 01-.22-.37L8.1 13h7.45a2 2 0 001.75-1.03l3.58-6.49A1 1 0 0020 4H5.21l-.94-2H1zm16 16a2 2 0 100 4 2 2 0 000-4z"/></svg>
+    買うものリスト<b id="shopCnt" hidden></b>
+  </button>
+</div>
+
+<main>
+  <section id="stock">
+    <div class="search">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <input id="q" type="search" placeholder="検索…">
+    </div>
+    <div id="groups"></div>
+    <button class="addgrp" id="addGrp">＋ ジャンルを追加</button>
+  </section>
+
+  <section id="shop" hidden>
+    <form class="addrow" id="addShop">
+      <svg viewBox="0 0 24 24"><path d="M11 9h2V6h3V4h-3V1h-2v3H8v2h3v3zm-4 9a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zm-9.83-3.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.86-7.01L19.42 4h-.01l-1.1 2-2.76 5H8.53l-.13-.27L6.16 6l-.95-2-.94-2H1v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.13 0-.25-.11-.25-.25z"/></svg>
+      <input id="pName" placeholder="買うものを追加" enterkeyhint="done" autocomplete="off">
+    </form>
+    <div id="shopBody"></div>
+  </section>
+</main>
+
+<button class="fab off" id="fab" aria-label="購入完了" hidden>
+  <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+</button>
+
+<script>
+const KEY="stockapp.v1";
+const DEF_CATS=["日用品","調味料","食品","飲料","その他"];
+const CHECK='<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!Array.isArray(S.stock)||!Array.isArray(S.shop))S={stock:[],shop:[]};
+
+const $=id=>document.getElementById(id);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
+const svgBox=html=>{const s=el("span");s.innerHTML=html;return s.firstChild}; // 固定文字列のみ
+
+function normalize(){
+  if(!Array.isArray(S.cats)||!S.cats.length)S.cats=[...DEF_CATS];
+  S.stock.forEach(i=>{if(!i.cat)i.cat="その他";if(!S.cats.includes(i.cat))S.cats.push(i.cat)});
+  S.shop.forEach(s=>{s.done=!!s.done;if(s.stockId&&!S.stock.some(i=>i.id===s.stockId))s.stockId=null});
+}
+normalize();
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert("保存に失敗しました")}};
+const inCart=i=>S.shop.some(s=>s.stockId===i.id);
+function commit(){normalize();save();render()}
+
+/* ---- 常備するもの ---- */
+function toggleCart(i){
+  if(inCart(i))S.shop=S.shop.filter(s=>s.stockId!==i.id);
+  else S.shop.push({id:uid(),name:i.name,stockId:i.id,done:false});
+  commit();
+}
+function renderStock(){
+  const q=$("q").value.trim().toLowerCase();
+  const box=$("groups");box.replaceChildren();
+  S.cats.forEach(cat=>{
+    const items=S.stock.filter(i=>i.cat===cat&&(!q||i.name.toLowerCase().includes(q)));
+    if(q&&!items.length)return;
+    const g=el("div","grp");
+    const h=el("div","gh");
+    const t=el("button","gt",cat);t.type="button";t.onclick=()=>editCat(cat);
+    const p=el("button","gp","＋");p.type="button";p.setAttribute("aria-label",cat+"に追加");p.onclick=()=>addItem(cat);
+    h.append(t,p);g.append(h);
+    items.forEach(i=>{
+      const c=el("div","card"+(inCart(i)?" cart":""));
+      const b=el("button","circle");b.type="button";b.append(svgBox(CHECK));
+      b.setAttribute("aria-label","買うものリストに入れる／戻す");b.onclick=()=>toggleCart(i);
+      const n=el("button","nm",i.name);n.type="button";n.onclick=()=>editItem(i);
+      c.append(b,n);g.append(c);
+    });
+    if(!items.length)g.append(el("div","hint","右上の＋で追加できます"));
+    box.append(g);
+  });
+}
+
+/* ---- 買うものリスト ---- */
+function shopRow(s){
+  const r=el("div","srow"+(s.done?" done":""));
+  const b=el("button","box");b.type="button";b.append(svgBox(CHECK));
+  b.setAttribute("aria-label","チェック");b.onclick=()=>{
+    // 常備品（定番）はチェックした時点で買うものリストから外れ、常備するものに戻る
+    if(s.stockId&&!s.done)S.shop=S.shop.filter(x=>x!==s);
+    else s.done=!s.done;
+    commit();
+  };
+  const n=el("button","nm",s.name);n.type="button";n.onclick=()=>editShop(s);
+  r.append(b,n);return r;
+}
+function renderShop(){
+  const box=$("shopBody");box.replaceChildren();
+  const pending=S.shop.filter(s=>!s.done),done=S.shop.filter(s=>s.done);
+  if(!S.shop.length){
+    const c=el("div","celebrate");c.append(el("div","em","🎉"),el("p",null,"すべて完了しました"));
+    box.append(c);
+  }
+  pending.forEach(s=>box.append(shopRow(s)));
+  if(done.length){box.append(el("div","sh","チェック済み"));done.forEach(s=>box.append(shopRow(s)))}
+  const n=pending.length;$("shopCnt").hidden=!n;$("shopCnt").textContent=n;
+  $("fab").classList.toggle("off",!done.length);
+}
+function render(){renderStock();renderShop()}
+
+$("addShop").onsubmit=e=>{
+  e.preventDefault();
+  const name=$("pName").value.trim();if(!name)return;
+  $("pName").value="";
+  const st=S.stock.find(i=>i.name===name);
+  if(st){if(!inCart(st))S.shop.push({id:uid(),name:st.name,stockId:st.id,done:false})}
+  else S.shop.push({id:uid(),name,stockId:null,done:false});
+  commit();
+};
+// 買った → チェック済みを買うものリストから外す（常備するものは自動で元の状態＝緑に戻る）
+$("fab").onclick=()=>{
+  if(!S.shop.some(s=>s.done))return;
+  S.shop=S.shop.filter(s=>!s.done);commit();
+};
+
+/* ---- タブ・検索 ---- */
+function tab(n){
+  const st=n==="stock";
+  $("stock").hidden=!st;$("shop").hidden=st;$("fab").hidden=st;$("share").hidden=st;
+  $("tStock").classList.toggle("on",st);$("tShop").classList.toggle("on",!st);
+  scrollTo(0,0);
+}
+$("tStock").onclick=()=>tab("stock");$("tShop").onclick=()=>tab("shop");
+$("q").oninput=renderStock;
+
+/* ---- 共有（未チェックの買うものを文章で送る） ---- */
+$("share").onclick=async()=>{
+  const items=S.shop.filter(s=>!s.done);
+  if(!items.length){alert("共有する買うものがありません");return}
+  const text="【買うものリスト】\n"+items.map(s=>"□ "+s.name).join("\n");
+  if(navigator.share){
+    try{await navigator.share({text})}catch(e){/* キャンセル */}
+    return;
+  }
+  try{await navigator.clipboard.writeText(text);alert("リストをコピーしました。LINE等に貼り付けてください。")}
+  catch(e){prompt("これをコピーして送ってください",text)}
+};
+
+/* ---- ダイアログ ---- */
+function sheet(build){
+  const ov=el("div","ov"),box=el("form","dlg");
+  const close=()=>ov.remove();
+  build(box,close);
+  ov.onclick=e=>{if(e.target===ov)close()};
+  ov.append(box);document.body.append(ov);
+  return box;
+}
+// fields: [{key,label,value,options?}]
+function openEdit(title,fields,onSave,onDelete){
+  const inputs={};
+  const box=sheet((box,close)=>{
+    box.append(el("h2",null,title));
+    fields.forEach(f=>{
+      const lab=el("label",null,f.label);let inp;
+      if(f.options){inp=document.createElement("select");f.options.forEach(o=>{const op=el("option",null,o);op.value=o;inp.append(op)})}
+      else{inp=document.createElement("input");inp.type="text"}
+      inp.value=f.value;inputs[f.key]=inp;lab.append(inp);box.append(lab);
+    });
+    const bar=el("div","dbar");
+    const cancel=el("button","btn gray","キャンセル");cancel.type="button";cancel.onclick=close;
+    bar.append(cancel,el("button","btn","保存"));box.append(bar);
+    if(onDelete){
+      const del=el("button","btn red wide","削除");del.type="button";
+      del.onclick=()=>{if(confirm("削除しますか？")){close();onDelete()}};box.append(del);
+    }
+    box.onsubmit=e=>{
+      e.preventDefault();
+      const v={};for(const k in inputs)v[k]=inputs[k].value.trim();
+      if(!v.name)return;
+      close();onSave(v);
+    };
+  });
+  inputs.name.focus();
+}
+function addItem(cat){
+  openEdit(cat+"に追加",[{key:"name",label:"品名",value:""}],v=>{
+    if(S.stock.some(i=>i.name===v.name&&i.cat===cat)){alert("すでにあります");return}
+    S.stock.push({id:uid(),name:v.name,cat});commit();
+  });
+}
+function editItem(i){
+  openEdit("編集",[
+    {key:"name",label:"品名",value:i.name},
+    {key:"cat",label:"ジャンル",value:i.cat,options:S.cats}
+  ],v=>{
+    i.name=v.name;i.cat=v.cat;
+    S.shop.forEach(s=>{if(s.stockId===i.id)s.name=i.name});commit();
+  },()=>{
+    S.stock=S.stock.filter(x=>x!==i);
+    S.shop=S.shop.filter(s=>s.stockId!==i.id);commit();
+  });
+}
+function editShop(s){
+  openEdit("編集",[{key:"name",label:"品名",value:s.name}],v=>{s.name=v.name;commit()},
+    ()=>{S.shop=S.shop.filter(x=>x!==s);commit()});
+}
+function editCat(cat){
+  openEdit("ジャンルを編集",[{key:"name",label:"ジャンル名",value:cat}],v=>{
+    if(v.name===cat)return;
+    if(S.cats.includes(v.name)){alert("同じ名前のジャンルがあります");return}
+    S.cats=S.cats.map(c=>c===cat?v.name:c);
+    S.stock.forEach(i=>{if(i.cat===cat)i.cat=v.name});commit();
+  },S.cats.length>1?()=>{
+    const to=S.cats.find(c=>c!==cat&&c==="その他")||S.cats.find(c=>c!==cat);
+    S.stock.forEach(i=>{if(i.cat===cat)i.cat=to});
+    S.cats=S.cats.filter(c=>c!==cat);commit();
+  }:null);
+}
+$("addGrp").onclick=()=>{
+  openEdit("ジャンルを追加",[{key:"name",label:"ジャンル名",value:""}],v=>{
+    if(S.cats.includes(v.name)){alert("同じ名前のジャンルがあります");return}
+    S.cats.push(v.name);commit();
+  });
+};
+
+/* ---- メニュー（バックアップ） ---- */
+$("menu").onclick=()=>{
+  sheet((box,close)=>{
+    box.append(el("h2",null,"バックアップ"));
+    box.append(el("p","hint","データはこの端末のブラウザに保存されています。機種変更や消去に備えて書き出しておけます。"));
+    const ex=el("button","btn wide","書き出す（コピー）");ex.type="button";
+    ex.onclick=async()=>{
+      const text=JSON.stringify(S);
+      try{await navigator.clipboard.writeText(text);alert("クリップボードにコピーしました。メモ等に貼り付けて保管してください。")}
+      catch(e){prompt("これをコピーして保管してください",text)}
+    };
+    const im=el("button","btn gray wide","読み込む（貼り付け）");im.type="button";
+    im.onclick=()=>{
+      const t=prompt("バックアップのテキストを貼り付け（現在のデータは置き換わります）");
+      if(!t)return;
+      try{const d=JSON.parse(t);if(!Array.isArray(d.stock)||!Array.isArray(d.shop))throw 0;S=d;close();commit()}
+      catch(e){alert("読み込めませんでした")}
+    };
+    const cl=el("button","btn gray wide","閉じる");cl.type="button";cl.onclick=close;
+    box.append(ex,im,cl);
+  });
+};
+
+commit();
+</script>
+</body>
+</html>
